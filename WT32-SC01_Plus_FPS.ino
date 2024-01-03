@@ -152,23 +152,32 @@ String formatWithCommas(uint32_t value) {
 }
 
 void animateSphere(LGFX_Sprite &tftBuffer, int radius, unsigned long currentMillis) {
-  static int currentX = radius + 15;  // Current X position of the sphere
-  static bool movingRight = true;     // Direction of movement
+  static int currentX = radius + 15;    // Current X position of the sphere
+  static unsigned long lastMillis = 0;  // Last update time
+  static bool movingRight = true;       // Direction of movement
 
-  // Calculate the position based on elapsed time
-  int speed = 3;                         // Adjust the speed as needed
+  float speed = 0.2;                     // Speed in pixels per millisecond
   int maxX = screenWidth - radius - 15;  // Maximum X position
+
+  // Calculate the elapsed time since the last update
+  unsigned long elapsedTime = currentMillis - lastMillis;
+  lastMillis = currentMillis;
+
+  // Calculate the distance to move based on speed and elapsed time
+  float distance = speed * elapsedTime;
 
   // Determine the new position
   if (movingRight) {
-    currentX += speed;
+    currentX += distance;
     if (currentX >= maxX) {
       movingRight = false;
+      currentX = maxX;  // Correct overshoot
     }
   } else {
-    currentX -= speed;
+    currentX -= distance;
     if (currentX <= radius) {
       movingRight = true;
+      currentX = radius;  // Correct overshoot
     }
   }
 
@@ -222,10 +231,9 @@ void loop() {
     tftBuffer.drawString("PSRAM Size:       " + formatBytes(ESP.getPsramSize()), 254, 94);
     tftBuffer.drawString("Free PSRAM:       " + formatBytes(ESP.getFreePsram()), 254, 110);
     tftBuffer.drawString("Min Free PSRAM:   " + formatBytes(ESP.getMinFreePsram()), 254, 126);
-
-    animateSphere(tftBuffer, 50, millis());
   }
 
+  animateSphere(tftBuffer, 20, millis());
   tftBuffer.pushSprite(0, 0);
 
   fps.update();
